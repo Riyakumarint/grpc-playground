@@ -1,6 +1,7 @@
 package calculator.client;
 
 import com.proto.calculator.CalculatorServiceGrpc;
+import com.proto.calculator.PrimeRequest;
 import com.proto.calculator.SumRequest;
 import com.proto.calculator.SumResponse;
 import io.grpc.ManagedChannel;
@@ -15,6 +16,15 @@ public class CalculatorClient {
         System.out.println("Sum 1 + 1 = " + response.getResult());
     }
 
+    private static void doPrimes(ManagedChannel channel) {
+        System.out.println("Enter doPrimes");
+        CalculatorServiceGrpc.CalculatorServiceBlockingStub stub = CalculatorServiceGrpc.newBlockingStub(channel);
+
+        stub.primes(PrimeRequest.newBuilder().setNumber(567890).build()).forEachRemaining(response ->
+                System.out.println(response.getPrimeFactor())
+        );
+    }
+
     public static void main(String[] args) throws InterruptedException {
         if (args.length == 0) {
             System.out.println("Need one argument to work");
@@ -27,6 +37,7 @@ public class CalculatorClient {
 
         switch (args[0]) {
             case "sum": doSum(channel); break;
+            case "primes": doPrimes(channel); break;
             default: System.out.println("Keyword Invalid: " + args[0]);
         }
 
