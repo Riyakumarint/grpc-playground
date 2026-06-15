@@ -4,6 +4,7 @@ package calculator;
 
 import "calculator/sum.proto";
 import "calculator/prime.proto";
+import "calculator/avg.proto";
 
 option java_package = "com.proto.calculator";
 option java_multiple_files = true;
@@ -11,4 +12,5 @@ option java_multiple_files = true;
 service CalculatorService {
   rpc Sum(SumRequest) returns (SumResponse);
   rpc Primes(PrimeRequest) returns (stream PrimeResponse);
+  rpc Avg(stream AvgRequest) returns (AvgResponse);
 }
