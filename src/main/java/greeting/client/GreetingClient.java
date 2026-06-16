@@ -65,6 +65,35 @@ public class GreetingClient {
         latch.await(3, TimeUnit.SECONDS);
     }
 
+    private static void doGreetEveryone(ManagedChannel channel) throws InterruptedException {
+        System.out.println("Enter doGreetEveryone");
+        GreetingServiceGrpc.GreetingServiceStub stub = GreetingServiceGrpc.newStub(channel);
+        CountDownLatch latch = new CountDownLatch(1);
+        StreamObserver<GreetingRequest> stream = stub.greetEveryone(new StreamObserver<GreetingResponse>() {
+            @Override
+            public void onNext(GreetingResponse response) {
+                System.out.println(response.getResult());
+            }
+
+            @Override
+            public void onError(Throwable throwable) {}
+
+            @Override
+            public void onCompleted() {
+                latch.countDown();
+            }
+        });
+
+        Arrays.asList("Clement", "Marie", "Test").forEach(name ->
+                stream.onNext(GreetingRequest.newBuilder().setFirstName(name).build())
+        );
+
+        stream.onCompleted();
+
+        //noinspection ResultOfMethodCallIgnored
+        latch.await(3, TimeUnit.SECONDS);
+    }
+
     public static void main(String[] args) throws InterruptedException {
         if (args.length == 0) {
             System.out.println("Need one argument to work");
@@ -80,6 +109,7 @@ public class GreetingClient {
             case "greet": doGreet(channel); break;
             case "greet_many_times": doGreetManyTimes(channel); break;
             case "greet_long": doLongGreet(channel); break;
+            case "greet_everyone": doGreetEveryone(channel); break;
             default: System.out.println("Keyword Invalid: " + args[0]);
         }
 

@@ -48,4 +48,24 @@ public final class GreetingServiceImpl extends GreetingServiceGrpc.GreetingServi
             }
         };
     }
+
+    @Override
+    public StreamObserver<GreetingRequest> greetEveryone(StreamObserver<GreetingResponse> responseObserver){
+        return new StreamObserver<GreetingRequest>() {
+            @Override
+            public void onNext(GreetingRequest request) {
+                responseObserver.onNext(GreetingResponse.newBuilder().setResult("Hello " + request.getFirstName()).build());
+            }
+
+            @Override
+            public void onError(Throwable t) {
+                responseObserver.onError(t);
+            }
+
+            @Override
+            public void onCompleted() {
+                responseObserver.onCompleted();
+            }
+        };
+    }
 }
