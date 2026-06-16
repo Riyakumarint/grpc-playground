@@ -7,6 +7,7 @@ import io.grpc.stub.StreamObserver;
 
 import java.util.Arrays;
 import java.util.concurrent.CountDownLatch;
+import java.util.concurrent.TimeUnit;
 
 public class CalculatorClient {
     private static void doSum(ManagedChannel channel) {
@@ -54,6 +55,34 @@ public class CalculatorClient {
         latch.await();
     }
 
+    private static void doMax(ManagedChannel channel) throws InterruptedException {
+        System.out.println("Enter doMax");
+        CalculatorServiceGrpc.CalculatorServiceStub stub = CalculatorServiceGrpc.newStub(channel);
+        CountDownLatch latch = new CountDownLatch(1);
+
+        StreamObserver<MaxRequest> stream = stub.max(new StreamObserver<MaxResponse>() {
+            @Override
+            public void onNext(MaxResponse response) {
+                System.out.println("Max = " + response.getMax());
+            }
+
+            @Override
+            public void onError(Throwable t) {}
+
+            @Override
+            public void onCompleted() {
+                latch.countDown();
+            }
+        });
+
+        Arrays.asList(1, 5, 3, 6, 2, 20).forEach(number ->
+                stream.onNext(MaxRequest.newBuilder().setNumber(number).build())
+        );
+
+        stream.onCompleted();
+        latch.await(3, TimeUnit.SECONDS);
+    }
+
     public static void main(String[] args) throws InterruptedException {
         if (args.length == 0) {
             System.out.println("Need one argument to work");
@@ -68,6 +97,7 @@ public class CalculatorClient {
             case "sum": doSum(channel); break;
             case "primes": doPrimes(channel); break;
             case "avg": doAvg(channel); break;
+            case "max": doMax(channel); break;
             default: System.out.println("Keyword Invalid: " + args[0]);
         }
 
