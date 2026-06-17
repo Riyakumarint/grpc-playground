@@ -1,5 +1,6 @@
 package blog.server;
 
+import com.google.protobuf.Empty;
 import com.mongodb.MongoException;
 import com.mongodb.client.*;
 import com.mongodb.client.result.InsertOneResult;
@@ -12,6 +13,8 @@ import org.bson.Document;
 import org.bson.types.ObjectId;
 
 import static com.mongodb.client.model.Filters.eq;
+import static com.mongodb.client.model.Updates.combine;
+import static com.mongodb.client.model.Updates.set;
 
 public final class BlogServiceImpl extends BlogServiceGrpc.BlogServiceImplBase {
 
@@ -87,6 +90,42 @@ public final class BlogServiceImpl extends BlogServiceGrpc.BlogServiceImplBase {
                 .setTitle(result.getString("title"))
                 .setContent(result.getString("content"))
                 .build());
+        responseObserver.onCompleted();
+    }
+
+    @Override
+    public void updateBlog(Blog request, StreamObserver<Empty> responseObserver) {
+        System.out.println("Received Update Blog request");
+
+        if (request.getId().isEmpty()) {
+            responseObserver.onError(Status.INVALID_ARGUMENT.withDescription("Blog id cannpt be empty").asRuntimeException());
+            return;
+        }
+
+        String id = request.getId();
+
+        System.out.println("Searching for a blog so we can update it");
+        Document result = mongoCollection.findOneAndUpdate(
+                eq("_id", new ObjectId(id)),
+                combine(
+                        set("author", request.getAuthor()),
+                        set("title", request.getTitle()),
+                        set("content", request.getContent())
+                )
+        );
+
+        if (result == null) {
+            System.out.println("Blog not found");
+            responseObserver.onError(
+                    Status.NOT_FOUND
+                            .withDescription("Blog was not found")
+                            .augmentDescription("BlogId: " + id)
+                            .asRuntimeException());
+            return;
+        }
+
+        System.out.println("Replaced! Sending as a response");
+        responseObserver.onNext(Empty.getDefaultInstance());
         responseObserver.onCompleted();
     }
 }
