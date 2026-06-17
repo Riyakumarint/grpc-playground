@@ -1,7 +1,5 @@
 package blog.client;
 
-import com.google.common.annotations.VisibleForTesting;
-import com.google.protobuf.Empty;
 import com.proto.blog.Blog;
 import com.proto.blog.BlogId;
 import com.proto.blog.BlogServiceGrpc;
@@ -10,8 +8,6 @@ import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
 
 import javax.annotation.Nonnull;
-import javax.annotation.Nullable;
-import java.io.PrintStream;
 
 public final class BlogClient {
 
@@ -24,6 +20,8 @@ public final class BlogClient {
 
         if (id == null)
             return;
+
+        readBlog(stub, id);
     }
 
     static BlogId createBlog(BlogServiceGrpc.BlogServiceBlockingStub stub) {
@@ -43,6 +41,21 @@ public final class BlogClient {
             return createResponse;
         } catch (StatusRuntimeException e) {
             System.out.println("Couldn't create the blog");
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    static Blog readBlog(BlogServiceGrpc.BlogServiceBlockingStub stub, @Nonnull BlogId blogId) {
+        System.out.println("Reading blog....");
+
+        try {
+            Blog readResponse = stub.readBlog(blogId);
+
+            System.out.println("Blog read:" + readResponse);
+            return readResponse;
+        } catch (StatusRuntimeException e) {
+            System.out.println("Couldn't read the blog");
             e.printStackTrace();
             return null;
         }
