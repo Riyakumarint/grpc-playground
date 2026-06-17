@@ -1,30 +1,25 @@
 package blog.client;
 
+import com.google.common.annotations.VisibleForTesting;
+import com.google.protobuf.Empty;
 import com.proto.blog.Blog;
 import com.proto.blog.BlogId;
 import com.proto.blog.BlogServiceGrpc;
 import io.grpc.ManagedChannel;
 import io.grpc.ManagedChannelBuilder;
 import io.grpc.StatusRuntimeException;
+import utils.ExcludeFromJacocoGeneratedReport;
 
 import javax.annotation.Nonnull;
+import javax.annotation.Nullable;
+import java.io.PrintStream;
 
 public final class BlogClient {
 
     private BlogClient() {}
 
-    private static void run(ManagedChannel channel) {
-        BlogServiceGrpc.BlogServiceBlockingStub stub = BlogServiceGrpc.newBlockingStub(channel);
-
-        BlogId id = createBlog(stub);
-
-        if (id == null)
-            return;
-
-        readBlog(stub, id);
-        updateBlog(stub, id);
-    }
-
+    @Nullable
+    @VisibleForTesting
     static BlogId createBlog(BlogServiceGrpc.BlogServiceBlockingStub stub) {
         System.out.println("Creating blog....");
 
@@ -47,6 +42,8 @@ public final class BlogClient {
         }
     }
 
+    @Nullable
+    @VisibleForTesting
     static Blog readBlog(BlogServiceGrpc.BlogServiceBlockingStub stub, @Nonnull BlogId blogId) {
         System.out.println("Reading blog....");
 
@@ -62,6 +59,9 @@ public final class BlogClient {
         }
     }
 
+    @Nullable
+    @VisibleForTesting
+    @SuppressWarnings("ResultOfMethodCallIgnored")
     static Blog updateBlog(BlogServiceGrpc.BlogServiceBlockingStub stub, @Nonnull BlogId blogId) {
         try {
             Blog newBlog = Blog.newBuilder()
@@ -84,6 +84,45 @@ public final class BlogClient {
         }
     }
 
+    @VisibleForTesting
+    static void listBlogs(BlogServiceGrpc.BlogServiceBlockingStub stub, PrintStream ps) {
+        ps.println("Listing blogs...");
+        stub.listBlogs(Empty.getDefaultInstance()).forEachRemaining(ps::print);
+    }
+
+    @Nullable
+    @VisibleForTesting
+    @SuppressWarnings("ResultOfMethodCallIgnored")
+    static BlogId deleteBlog(BlogServiceGrpc.BlogServiceBlockingStub stub, @Nonnull BlogId blogId) {
+        try {
+            System.out.println("Deleting blog");
+            stub.deleteBlog(blogId);
+
+            System.out.println("Blog deleted: " + blogId.getId());
+            return blogId;
+        } catch (StatusRuntimeException e) {
+            System.out.println("Couldn't delete the blog");
+            e.printStackTrace();
+            return null;
+        }
+    }
+
+    @ExcludeFromJacocoGeneratedReport
+    private static void run(ManagedChannel channel) {
+        BlogServiceGrpc.BlogServiceBlockingStub stub = BlogServiceGrpc.newBlockingStub(channel);
+
+        BlogId id = createBlog(stub);
+
+        if (id == null)
+            return;
+
+        readBlog(stub, id);
+        updateBlog(stub, id);
+        listBlogs(stub, System.out);
+        deleteBlog(stub, id);
+    }
+
+    @ExcludeFromJacocoGeneratedReport
     public static void main(String[] args) {
         ManagedChannel channel = ManagedChannelBuilder.forAddress("localhost", 50051)
                 .usePlaintext()
